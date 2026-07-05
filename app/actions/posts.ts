@@ -93,3 +93,13 @@ export async function createPost(
   // Outside try/catch: redirect() throws a control-flow signal.
   redirect("/posts");
 }
+
+
+// "max" means:
+
+// Mark the cache as stale
+// Continue serving the stale cache if necessary
+// The next request will trigger a background refresh
+// Users don't have to wait for regeneration
+
+// This is called stale-while-revalidate behavior.
