@@ -7,7 +7,7 @@ import { apiFetch } from "@/lib/api";
 import { requireUser } from "@/lib/dal";
 import { POSTS_TAG, postTag } from "@/lib/cache-tags";
 import { CreatePostSchema } from "@/lib/validation/post";
-import type { PostFormState } from "@/lib/posts/types";
+import type { CommentFormState, PostFormState } from "@/lib/posts/types";
 
 /**
  * Post write layer (the "mutations").
@@ -35,6 +35,46 @@ export async function deletePost(postId: string): Promise<void> {
   await apiFetch("post", `/v1/posts/${postId}`, { method: "DELETE" });
   revalidateTag(POSTS_TAG, "max");
   revalidateTag(postTag(postId), "max");
+}
+
+/**
+ * Add a comment to a post. The backend stores the comment as a single
+ * "Name:text" string (matching the legacy format), so we prefix the current
+ * user's name here. Uses the `useActionState` contract to report errors.
+ */
+export async function commentPost(
+  _prevState: CommentFormState | undefined,
+  formData: FormData
+): Promise<CommentFormState> {
+  const user = await requireUser();
+
+  const postId = String(formData.get("postId") ?? "");
+  const comment = String(formData.get("comment") ?? "").trim();
+
+  if (!comment) {
+    return { status: "error", error: "Comment cannot be empty." };
+  }
+
+  const finalComment = `${user.name}:${comment}`;
+
+  let result;
+  try {
+    result = await apiFetch("post", `/v1/posts/${postId}/commentPost`, {
+      method: "POST",
+      body: { finalComment },
+    });
+  } catch {
+    return { status: "error", error: "Unable to reach the post service." };
+  }
+
+  if (!result.ok) {
+    return { status: "error", error: "Could not add your comment." };
+  }
+
+  // Invalidate the post (and feed) so the new comment shows on re-render.
+  revalidateTag(postTag(postId), "max");
+  revalidateTag(POSTS_TAG, "max");
+  return { status: "success" };
 }
 
 /** Create a new post. Uses the `useActionState` form contract. */

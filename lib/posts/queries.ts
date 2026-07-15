@@ -41,3 +41,24 @@ export async function getPost(id: string): Promise<Post | null> {
 
   return ok ? data : null;
 }
+
+/**
+ * Fetch posts that share any of the given tags — used for the "You might also
+ * like" recommendations on a post's detail page. Tagged with POSTS_TAG so it's
+ * invalidated whenever the feed changes.
+ */
+export async function getPostsByTags(tags: string[]): Promise<Post[]> {
+  if (!tags.length) return [];
+
+  const query = encodeURIComponent(tags.join(","));
+  const { ok, data } = await apiFetch<PostsPage>(
+    "post",
+    `/v1/posts?tags=${query}`,
+    {
+      auth: false,
+      next: { tags: [POSTS_TAG], revalidate: 3600 },
+    }
+  );
+
+  return ok && data?.data ? data.data : [];
+}

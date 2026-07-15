@@ -33,6 +33,12 @@ export interface PostsPage {
   numberOfPages: number;
 }
 
+/** State returned by the commentPost Server Action, consumed by `useActionState`. */
+export interface CommentFormState {
+  status?: "success" | "error";
+  error?: string;
+}
+
 /** State returned by the createPost Server Action, consumed by `useActionState`. */
 export interface PostFormState {
   errors?: {

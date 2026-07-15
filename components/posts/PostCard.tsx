@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useTransition } from "react";
 import { likePost, deletePost } from "@/app/actions/posts";
 import type { Post } from "@/lib/posts/types";
@@ -47,7 +48,12 @@ export function PostCard({
           <span>{new Date(post.createdAt).toLocaleDateString()}</span>
         </div>
 
-        <h3 className="text-lg font-semibold text-slate-900">{post.title}</h3>
+        <Link
+          href={`/posts/${post._id}`}
+          className="text-lg font-semibold text-slate-900 transition hover:text-indigo-600"
+        >
+          {post.title}
+        </Link>
 
         {post.tags.length ? (
           <p className="text-xs text-indigo-500">
